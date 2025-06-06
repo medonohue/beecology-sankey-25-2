@@ -24,6 +24,12 @@ def get_sankey_data():
         df = df[df['flower_family'].str.lower() != 'unknown']
         grouped = df.groupby(['species', 'flower_family']).size().reset_index(name='count')
 
+        # Normalize: Scale left side to match right side total
+        bee_totals = grouped.groupby('species')['count'].sum().sum()
+        flower_totals = grouped.groupby('flower_family')['count'].sum().sum()
+        scaling_factor = flower_totals / bee_totals if bee_totals < flower_totals else 1
+        grouped['count'] *= scaling_factor
+
         labels = pd.unique(grouped[['species', 'flower_family']].values.ravel())
         label_map = {label: i for i, label in enumerate(labels)}
         nodes = [{"name": label} for label in labels]
