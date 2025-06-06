@@ -26,12 +26,18 @@ def get_sankey_data():
 
         labels = pd.unique(grouped[['species', 'flower_family']].values.ravel())
         label_map = {label: i for i, label in enumerate(labels)}
+        nodes = [{"name": label} for label in labels]
 
-        return {
-            "labels": labels.tolist(),
-            "sources": [label_map[row['species']] for _, row in grouped.iterrows()],
-            "targets": [label_map[row['flower_family']] for _, row in grouped.iterrows()],
-            "values": grouped['count'].tolist()
-        }
+        links = [
+            {
+                "source": label_map[row['species']],
+                "target": label_map[row['flower_family']],
+                "value": row['count']
+            }
+            for _, row in grouped.iterrows()
+        ]
+
+        return {"nodes": nodes, "links": links}
+
     except Exception as e:
         return {"error": str(e)}
