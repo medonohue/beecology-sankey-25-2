@@ -1,39 +1,74 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Bee-Flower Sankey Diagram</title>
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <meta charset="UTF-8" />
+  <title>Bee to Flower Family Sankey (D3.js, Live)</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; background: #f4f4f4; }
+    .node rect { cursor: move; fill-opacity: 0.8; shape-rendering: crispEdges; }
+    .node text { pointer-events: none; font-size: 12px; fill: #333; }
+    .link { fill: none; stroke-opacity: 0.3; }
+    .link:hover { stroke-opacity: 1.0; stroke-width: 3px; }
+  </style>
 </head>
 <body>
   <h2>Bee Species and Flower Family Interactions</h2>
-  <div id="sankey" style="width:100%; height:600px;"></div>
+  <svg id="sankey" width="960" height="600"></svg>
+
   <script>
+    const svg = d3.select("#sankey"),
+          width = +svg.attr("width"),
+          height = +svg.attr("height");
+
+    const sankey = d3.sankey()
+      .nodeWidth(20)
+      .nodePadding(15)
+      .extent([[1, 1], [width - 1, height - 6]]);
+
     fetch("https://beecology-sankey-25-2.onrender.com/sankey-data")
       .then(response => response.json())
       .then(data => {
-        if (!data.labels || !data.sources || !data.targets || !data.values) {
-          throw new Error("Missing or invalid data.");
-        }
-        const sankey = {
-          type: "sankey",
-          orientation: "h",
-          node: {
-            pad: 15,
-            thickness: 20,
-            label: data.labels
-          },
-          link: {
-            source: data.sources,
-            target: data.targets,
-            value: data.values
-          }
-        };
-        Plotly.newPlot('sankey', [sankey], {title: "Bee Visits to Flower Families"});
+        const {nodes, links} = sankey(data);
+
+        svg.append("g")
+          .selectAll("path")
+          .data(links)
+          .join("path")
+            .attr("class", "link")
+            .attr("d", d3.sankeyLinkHorizontal())
+            .attr("stroke", "#999")
+            .attr("stroke-width", d => Math.max(1, d.width));
+
+        const node = svg.append("g")
+          .selectAll("g")
+          .data(nodes)
+          .join("g")
+            .attr("class", "node");
+
+        node.append("rect")
+            .attr("x", d => d.x0)
+            .attr("y", d => d.y0)
+            .attr("height", d => d.y1 - d.y0)
+            .attr("width", d => d.x1 - d.x0)
+            .attr("fill", "#69b3a2")
+            .attr("stroke", "#333");
+
+        node.append("text")
+            .attr("x", d => d.x0 - 6)
+            .attr("y", d => (d.y1 + d.y0) / 2)
+            .attr("dy", "0.35em")
+            .attr("text-anchor", "end")
+            .text(d => d.name)
+          .filter(d => d.x0 < width / 2)
+            .attr("x", d => d.x1 + 6)
+            .attr("text-anchor", "start");
       })
-      .catch(error => {
-        document.getElementById("sankey").innerText = "Error loading chart: " + error.message;
-        console.error("Sankey Error:", error);
+      .catch(err => {
+        svg.append("text").text("Failed to load Sankey data").attr("x", 20).attr("y", 50);
+        console.error("Failed to load data:", err);
       });
   </script>
 </body>
