@@ -1,0 +1,40 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bee-Flower Sankey Diagram</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+  <h2>Bee Species and Flower Family Interactions</h2>
+  <div id="sankey" style="width:100%; height:600px;"></div>
+  <script>
+    fetch("https://your-render-app.onrender.com/sankey-data")
+      .then(response => response.json())
+      .then(data => {
+        if (!data.labels || !data.sources || !data.targets || !data.values) {
+          throw new Error("Missing or invalid data.");
+        }
+        const sankey = {
+          type: "sankey",
+          orientation: "h",
+          node: {
+            pad: 15,
+            thickness: 20,
+            label: data.labels
+          },
+          link: {
+            source: data.sources,
+            target: data.targets,
+            value: data.values
+          }
+        };
+        Plotly.newPlot('sankey', [sankey], {title: "Bee Visits to Flower Families"});
+      })
+      .catch(error => {
+        document.getElementById("sankey").innerText = "Error loading chart: " + error.message;
+        console.error("Sankey Error:", error);
+      });
+  </script>
+</body>
+</html>
