@@ -3,20 +3,56 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Bee to Flower Family Sankey (D3.js, Live)</title>
+  <title>Bee to Flower Family Sankey (D3.js - Tableau Style)</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 30px; background: #f4f4f4; }
-    .node rect { cursor: move; fill-opacity: 0.8; shape-rendering: crispEdges; }
-    .node text { pointer-events: none; font-size: 12px; fill: #333; }
-    .link { fill: none; stroke-opacity: 0.3; }
-    .link:hover { stroke-opacity: 1.0; stroke-width: 3px; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 40px;
+      background: #ffffff;
+      color: #333;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    svg {
+      font: 12px 'Segoe UI', sans-serif;
+    }
+
+    .node rect {
+      cursor: move;
+      fill-opacity: 0.95;
+      shape-rendering: crispEdges;
+      stroke: #ccc;
+      stroke-width: 0.8px;
+      rx: 4;
+      ry: 4;
+    }
+
+    .node text {
+      pointer-events: none;
+      font-size: 13px;
+      fill: #333;
+    }
+
+    .link {
+      fill: none;
+      stroke-opacity: 0.25;
+      transition: stroke-opacity 0.2s, stroke-width 0.2s;
+    }
+
+    .link:hover {
+      stroke-opacity: 0.85;
+      stroke-width: 3;
+    }
   </style>
 </head>
 <body>
   <h2>Bee Species and Flower Family Interactions</h2>
-  <svg id="sankey" width="960" height="600"></svg>
+  <svg id="sankey" width="1200" height="1000"></svg>
 
   <script>
     const svg = d3.select("#sankey"),
@@ -24,8 +60,8 @@
           height = +svg.attr("height");
 
     const sankey = d3.sankey()
-      .nodeWidth(20)
-      .nodePadding(15)
+      .nodeWidth(14)
+      .nodePadding(40)
       .extent([[1, 1], [width - 1, height - 6]]);
 
     fetch("https://beecology-sankey-25-2.onrender.com/sankey-data")
@@ -33,13 +69,16 @@
       .then(data => {
         const {nodes, links} = sankey(data);
 
+        // Define a color scale
+        const color = d3.scaleOrdinal(d3.schemeTableau10);
+
         svg.append("g")
           .selectAll("path")
           .data(links)
           .join("path")
             .attr("class", "link")
             .attr("d", d3.sankeyLinkHorizontal())
-            .attr("stroke", "#999")
+            .attr("stroke", d => color(d.source.name))
             .attr("stroke-width", d => Math.max(1, d.width));
 
         const node = svg.append("g")
@@ -53,8 +92,8 @@
             .attr("y", d => d.y0)
             .attr("height", d => d.y1 - d.y0)
             .attr("width", d => d.x1 - d.x0)
-            .attr("fill", "#69b3a2")
-            .attr("stroke", "#333");
+            .attr("fill", d => color(d.name))
+            .attr("stroke", "#ccc");
 
         node.append("text")
             .attr("x", d => d.x0 - 6)
